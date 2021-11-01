@@ -32,7 +32,7 @@ cc_library(
     linkstatic = True,
     visibility = ["//visibility:public"],
     deps = [
-        ":djinni-support-common",
+        ":djinni-base",
         "@bazel_tools//tools/jdk:jni",
     ],
     alwayslink = 1,
@@ -57,5 +57,5 @@ objc_library(
         "-ObjC++",
     ],
     visibility = ["//visibility:public"],
-    deps = [":djinni-support-common"],
+    deps = [":djinni-base"],
 )
