@@ -2,52 +2,60 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "objc_library")
 load("@rules_java//java:defs.bzl", "java_library")
 
 cc_library(
-    name = "djinni-support-common",
-    hdrs = glob(["*.hpp", "cpp/*.hpp"]),
-    #includes = [".", "cpp"],
+    name = "djinni-base",
+    srcs = [
+        "djinni/cwrapper/wrapper_marshal.cpp",
+    ],
+    hdrs = [
+        "djinni/cwrapper/wrapper_marshal.h",
+        "djinni/cwrapper/wrapper_marshal.hpp",
+        "djinni/djinni_common.hpp",
+        "djinni/proxy_cache_impl.hpp",
+        "djinni/proxy_cache_interface.hpp",
+    ],
+    copts = ["--std=c++17"],
     visibility = ["//visibility:public"],
 )
 
 cc_library(
-    name = "djinni-support-jni",
-    srcs = glob(["jni/*.cpp", "cpp/*.cpp"]),
-    hdrs = glob(["jni/*.hpp"]),
-    # includes = ["jni"],
+    name = "djinni-jni",
+    srcs = [
+        "djinni/jni/djinni_jni_main.cpp",
+        "djinni/jni/djinni_support.cpp",
+    ],
+    hdrs = [
+        "djinni/jni/Marshal.hpp",
+        "djinni/jni/djinni_jni_main.hpp",
+        "djinni/jni/djinni_support.hpp",
+    ],
+    copts = ["--std=c++17"],
     linkstatic = True,
     visibility = ["//visibility:public"],
     deps = [
-        "//support-lib:djinni-support-common",
+        ":djinni-support-common",
         "@bazel_tools//tools/jdk:jni",
     ],
     alwayslink = 1,
 )
 
-cc_library(
-    name = "djinni-support-android",
-    srcs = glob(["jni/*.cpp", "cpp/*.cpp"]),
-    hdrs = glob(["jni/*.hpp"]),
-    # includes = ["jni"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//support-lib:djinni-support-common",
-    ],
-    alwayslink = 1,
-)
+# TODO, there is a smarter way of doing so .....
+# that is, make the jni dependency not needed when build for android
 
 objc_library(
-    name = "djinni-support-objc",
-    srcs = glob(["objc/*.mm", "cpp/*.cpp"]),
-    hdrs = glob(["objc/*.h", "objc/*.hpp"]),
+    name = "djinni-objc",
+    srcs = [
+        "djinni/objc/DJICppWrapperCache+Private.h",
+        "djinni/objc/DJIError.mm",
+        "djinni/objc/DJIMarshal+Private.h",
+        "djinni/objc/DJIObjcWrapperCache+Private.h",
+        "djinni/objc/DJIProxyCaches.mm",
+    ],
+    hdrs = [
+        "djinni/objc/DJIError.h",
+    ],
     copts = [
         "-ObjC++",
     ],
-    # includes = ["objc"],
     visibility = ["//visibility:public"],
-    deps = ["//support-lib:djinni-support-common"],
-)
-
-java_library(
-    name = "djinni-support-java",
-    srcs = glob(["java/**/*.java"]),
-    visibility = ["//visibility:public"],
+    deps = [":djinni-support-common"],
 )
