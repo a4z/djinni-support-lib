@@ -1,5 +1,4 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "objc_library")
-load("@rules_java//java:defs.bzl", "java_library")
 
 cc_library(
     name = "djinni-base",
@@ -33,13 +32,10 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":djinni-base",
-        "@bazel_tools//tools/jdk:jni",
+        "@bazel_tools//tools/jdk:jni", # TODO , not needed in Android build
     ],
     alwayslink = 1,
 )
-
-# TODO, there is a smarter way of doing so .....
-# that is, make the jni dependency not needed when build for android
 
 objc_library(
     name = "djinni-objc",
