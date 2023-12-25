@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - main
+      - feature/generator-choice # TODO remove this line after PR is merged
   pull_request_target:
     types: [assigned, opened, synchronize, reopened]
 jobs:
