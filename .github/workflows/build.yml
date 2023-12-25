@@ -18,7 +18,12 @@ jobs:
     runs-on: macos-12
     steps:
     - uses: actions/checkout@v2
-    - uses: ./.github/actions/get-generator.yml
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
@@ -52,7 +57,12 @@ jobs:
       uses: py-actions/py-dependency-install@v3
       with:
         path: "requirements.txt"
-    - uses: ./.github/actions/get-generator.yml
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
