@@ -4,6 +4,10 @@
 # which is only possible by using pull_request_target.
 # But that means, every PR runs with the pipeline from the main branch.
 
+# If you want to test your changes, that can happen in the fork.
+# Create an access key and add it as a GENERATOR_DL_TOKEN secret to your fork.
+# Then add your branch to the branches list on the push event.
+# This way it will become visible that the branch works as expected.
 
 name: build-all-configs
 on:
@@ -77,11 +81,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON
+      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Build release
       run: cmake --build build --parallel $(nproc) --config Release
     - name: Run tests
@@ -100,11 +109,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON -DJNI_CPP_THREAD_ATTACH=ON -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON -DJNI_CPP_THREAD_ATTACH=ON -DCMAKE_BUILD_TYPE=Release -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Build release
       run: cmake --build build --parallel $(nproc)
     - name: Run tests
@@ -116,14 +130,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - uses: ashutoshvarma/setup-ninja@master
       with:
         version: 1.10.2
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON -DJNI_CPP_THREAD_ATTACH=ON -DCMAKE_BUILD_TYPE=Release -DJINNI_BUILD_TESTING=OFF -DCMAKE_TOOLCHAIN_FILE=${ANDROID_SDK_ROOT}/ndk/$(ls ${ANDROID_SDK_ROOT}/ndk -C1 | sort -r | head -1)/build/cmake/android.toolchain.cmake -DANDROID_PLATFORM=android-26 -DANDROID_NATIVE_API_LEVEL=26 -DANDROID_ABI=armeabi-v7a -G Ninja
+      run: cmake -S . -B build -DDJINNI_WITH_JNI=ON -DJNI_CPP_THREAD_ATTACH=ON -DCMAKE_BUILD_TYPE=Release -DJINNI_BUILD_TESTING=OFF -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni" -DCMAKE_TOOLCHAIN_FILE=${ANDROID_SDK_ROOT}/ndk/$(ls ${ANDROID_SDK_ROOT}/ndk -C1 | sort -r | head -1)/build/cmake/android.toolchain.cmake -DANDROID_PLATFORM=android-26 -DANDROID_NATIVE_API_LEVEL=26 -DANDROID_ABI=armeabi-v7a -G Ninja
     - name: Build release
       run: cmake --build build --parallel $(nproc)
 
@@ -131,7 +150,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v3
       with:
@@ -139,7 +163,7 @@ jobs:
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_PYTHON=ON
+      run: cmake -S . -B build -DDJINNI_WITH_PYTHON=ON -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Build release
       run: cmake --build build --parallel $(nproc) --config Release
     - name: Run tests
@@ -151,15 +175,21 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - name: install djinni
-      run: |
-        $VERSION = 'v' + [regex]::Match((Get-Content .tool-versions), '^djinni (\d+.\d+.\d+)').captures.groups[1].value
-        $URL = 'https://github.com/cross-language-cpp/djinni-generator/releases/download/' + $VERSION + '/djinni.bat'
-        Invoke-WebRequest -Uri $URL -OutFile djinni.bat
+    - name: Install requests
+      run: pip install requests
+    - name: Run get-generator.py
+      run: python get-generator.py
+      env:
+        GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
+    # - name: install djinni
+    #   run: |
+    #     $VERSION = 'v' + [regex]::Match((Get-Content .tool-versions), '^djinni (\d+.\d+.\d+)').captures.groups[1].value
+    #     $URL = 'https://github.com/cross-language-cpp/djinni-generator/releases/download/' + $VERSION + '/djinni.bat'
+    #     Invoke-WebRequest -Uri $URL -OutFile djinni.bat
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_CPPCLI=ON -DCMAKE_INSTALL_PREFIX=build/check_install_root -DDJINNI_EXECUTABLE="$(((Get-Location).Path) -replace "\\","/")/djinni.bat" -G "Visual Studio 17 2022"
+      run: cmake -S . -B build -DDJINNI_WITH_CPPCLI=ON -DCMAKE_INSTALL_PREFIX=build/check_install_root -DDJINNI_EXECUTABLE="zz/djinni.bat" -G "Visual Studio 17 2022"
     - name: Install nuget dependencies
       working-directory: build/test-suite
       run: dotnet restore DjinniCppCliTest.csproj --runtime win-x64
@@ -182,6 +212,7 @@ jobs:
     needs: ["build-on-windows-for-cppcli", "build-on-ubuntu-for-python", "build-on-ubuntu-for-android_arm32-with-thread-attach", "build-on-ubuntu-for-jni-with-thread-attach", "build-on-ubuntu-for-jni", "build-on-osx-for-python", "build-on-osx-for-objectiveC"]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Check release generator was used
         run: |
           dl_arg=$(head -n 1 generator.cfg | awk '{print $1}')
