@@ -1,3 +1,10 @@
+# Changes in this file need to be pushed to the main branch to take effect.
+# pull_request_target
+# Unfortunately, we want to access GitHub secrets in this workflow,
+# which is only possible by using pull_request_target.
+# But that means, every PR runs with the pipeline from the main branch.
+
+
 name: build-all-configs
 on:
   push:
@@ -7,16 +14,16 @@ on:
     types: [assigned, opened, synchronize, reopened]
 jobs:
   build-on-osx-for-objectiveC:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
+    - uses: ./.github/actions/get-generator.yml
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
       run: cmake -S . -B build -DDJINNI_WITH_OBJC=ON -G Xcode
     - name: Build release
-      run: cmake --build build --parallel $(sysctl -n hw.ncpu) --config Release
+      run: cmake --build build --parallel $(sysctl -n hw.ncpu) --config Release -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Run tests
       working-directory: build/test-suite
       run: ctest -C Release -V
@@ -30,13 +37,12 @@ jobs:
       run: diff -u ../../test/objc_list.txt <(du -a | tail -r | awk -F ' ' '{print $2}')
 
   build-on-osx-for-python:
-    runs-on: macos-11
+    runs-on: macos-12
     strategy:
       matrix:
-        python-version: ["3.7.12", "3.10.4"] # oldest and newest, rest assumed to work
+        python-version: ["3.7.17", "3.12.1"] # oldest and newest chached on gh actions (at the moment of writing this)
     steps:
     - uses: actions/checkout@v2
-    - uses: asdf-vm/actions/install@v1
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -45,10 +51,11 @@ jobs:
       uses: py-actions/py-dependency-install@v3
       with:
         path: "requirements.txt"
+    - uses: ./.github/actions/get-generator.yml
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_PYTHON=ON
+      run: cmake -S . -B build -DDJINNI_WITH_PYTHON=ON -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Build release
       run: cmake --build build --parallel $(sysctl -n hw.ncpu) --config Release
     - name: Run tests
@@ -159,3 +166,15 @@ jobs:
       working-directory: build/check_install_root
       run: if((Compare-Object (Get-Content ..\..\test\cppcli_list.txt) (Resolve-Path -Path (Get-ChildItem -Recurse).FullName -Relative))) { Write-Error "file list not equal" }
 
+
+  check_generator_used:
+    needs: ["build-on-windows-for-cppcli", "build-on-ubuntu-for-python", "build-on-ubuntu-for-android_arm32-with-thread-attach", "build-on-ubuntu-for-jni-with-thread-attach", "build-on-ubuntu-for-jni", "build-on-osx-for-python", "build-on-osx-for-objectiveC"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check release generator was used
+        run: |
+          dl_arg=$(head -n 1 generator.cfg | awk '{print $1}')
+          if [ "$dl_arg" != "release" ]; then
+              echo "dl_arg is not 'release'"
+              exit 1
+          fi

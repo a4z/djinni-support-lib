@@ -1,0 +1,14 @@
+name: Get Djinni Generator
+
+on:
+  workflow_call:
+
+jobs:
+  get-generator:
+    steps:
+      - name: Install requests
+        run: pip install requests
+      - name: Run get-generator.py
+        run: python get-generator.py
+        env:
+          GENERATOR_DL_TOKEN: ${{ secrets.GENERATOR_DL_TOKEN }}
