@@ -27,9 +27,9 @@ jobs:
     - name: Report cmake version
       run: cmake --version
     - name: Configure cmake
-      run: cmake -S . -B build -DDJINNI_WITH_OBJC=ON -G Xcode
+      run: cmake -S . -B build -DDJINNI_WITH_OBJC=ON -G Xcode -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
     - name: Build release
-      run: cmake --build build --parallel $(sysctl -n hw.ncpu) --config Release -DDJINNI_EXECUTABLE="$(pwd)/zz/djinni"
+      run: cmake --build build --parallel $(sysctl -n hw.ncpu) --config Release
     - name: Run tests
       working-directory: build/test-suite
       run: ctest -C Release -V
